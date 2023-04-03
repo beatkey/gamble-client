@@ -1,30 +1,93 @@
 import Head from "next/head";
 import Image from "next/image";
 
-import roulette from "/public/roulette.png"
-import {useState} from "react";
-
-const SpinWrapper = ({spinDeg, spinDuration}) => {
-    return <div className="relative mt-10">
-        <div style={{transform: `rotate(${spinDeg}deg)`, transitionDuration: `${spinDuration}ms`}}
-             className={`transition-transform ease-linear`}>
-            <Image src={roulette} alt="Roulette"/>
-        </div>
-        <div
-            className="absolute w-full h-full text-5xl inset-0 flex items-center justify-center">
-            15
-        </div>
-        <div
-            className="absolute top-1/2 -right-7 -translate-y-1/2 -translate-x-1/2 border-t-[25px] border-r-[25px] border-b-[25px] border-t-transparent border-b-transparent"></div>
-    </div>
-}
+import roulettePng from "/public/roulette.png"
+import {useEffect, useRef, useState} from "react";
 
 export default function Home() {
     const [spinDeg, setSpinDeg] = useState(0)
-    const [spinDuration, setSpinDuration] = useState(10000)
+    const [spinDuration, setSpinDuration] = useState(15000)
+    const [time, setTime] = useState(5)
+    const roulette = useRef()
+    const [spinHistory, setSpinHistory] = useState([]);
+    const spinRange = {
+        /*
+        * 2 = -9deg - 14.3deg
+        * 8 = 15deg - 38.2deg
+        * 1 = 39.2deg - 62.3deg
+        * 0 = 63.2deg - 86.2deg
+        * 14 = 86.9deg - 110.6deg
+        * 7 = 111.6deg - 134.4deg
+        * 13 = 135.6deg - 158.6deg
+        * 6 = 160deg - 182.7deg
+        * 12 = 184deg - 206.8deg
+        * 5 = 208.2deg - 230.8deg
+        * 11 = 232.2deg - 254.8deg
+        * 4 = 256.4deg - 278.7deg
+        * 10 = 280deg - 302.6deg
+        * 3 = 304deg - 326.3deg
+        * 9 = 327.7deg - 350.2deg
+        * */
+        0: [63.2, 86.2],
+        1: [39.2, 62.3],
+        2: [-9, 14.3],
+        3: [304, 326.3],
+        4: [256.4, 278.7],
+        5: [208.2, 230.8],
+        6: [160, 182.7],
+        7: [111.6, 134.4],
+        8: [15, 38.2],
+        9: [327.7, 350.2],
+        10: [280, 302.6],
+        11: [232.2, 254.8],
+        12: [184, 206.8],
+        13: [135.6, 158.6],
+        14: [86.9, 110.6],
+    }
+
+    function spinReset(range) {
+        setSpinDuration(0)
+        setSpinDeg(range - (360 * 5))
+        setTime(15)
+    }
 
     function spin() {
-        setSpinDeg(spinDeg => spinDeg + 1000)
+        setSpinDuration(15000)
+        const randomNumber = Math.floor(Math.random() * 15);
+        const min = spinRange[randomNumber][0]
+        const max = spinRange[randomNumber][1]
+        const range = parseFloat((Math.random() * (max - min) + min).toFixed(1))
+        console.log(randomNumber)
+        setSpinDeg(range + (360 * 5)) // spin range + (360 * spin rep)
+
+        setTimeout(() => {
+            spinReset(range)
+            start()
+            setSpinHistory(spinHistory => [randomNumber, ...spinHistory])
+        }, 15000)
+
+        /*setTimeout(() => {
+            setSpinDeg(4000)
+        }, 2000)*/
+    }
+
+    useEffect(() => {
+        console.log("dd")
+        start()
+    }, [])
+
+    function start() {
+        const timer = setInterval(() => {
+            setTime(time => {
+                if (time > 0) {
+                    return time - 1
+                } else {
+                    spin()
+                    clearInterval(timer)
+                    return 0
+                }
+            })
+        }, 1000)
     }
 
     return (
@@ -37,12 +100,23 @@ export default function Home() {
             </Head>
             <main className="h-screen w-screen">
                 <div className="container mx-auto flex justify-center">
-                    <SpinWrapper spinDeg={spinDeg} spinDuration={spinDuration}/>
+                    <div className="relative mt-10">
+                        <div ref={roulette} style={{
+                            transform: `rotate(${spinDeg}deg)`,
+                            transition: `transform ${spinDuration}ms cubic-bezier(0.32, 0.95, 0.45, 1) 0ms`
+                        }}>
+                            <Image src={roulettePng} alt="Roulette"/>
+                        </div>
+                        <div
+                            className="absolute w-full h-full text-5xl inset-0 flex items-center justify-center">
+                            {time === 0 ? "Raffling" : time}
+                        </div>
+                        <div
+                            className="absolute top-1/2 -right-7 -translate-y-1/2 -translate-x-1/2 border-t-[25px] border-r-[25px] border-b-[25px] border-t-transparent border-b-transparent"></div>
+                    </div>
                 </div>
-                <div className="flex justify-center mt-10">
-                    <button onClick={() => spin()}>
-                        Click
-                    </button>
+                <div className="flex justify-center gap-5 mt-5">
+                    {spinHistory.map((value, index) => <div className="text-lg font-bold" key={index}>{value}</div>)}
                 </div>
             </main>
         </>
