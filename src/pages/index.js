@@ -5,9 +5,23 @@ import roulettePng from "/public/roulette.png"
 import {useEffect, useRef, useState} from "react";
 
 export default function Home() {
+    const raffleTime = 3000
+    const spinTime = 4
+
+    const [time, setTime] = useState(spinTime)
+
+    const [balance, setBalance] = useState(10000)
+
+    const [redAmount, setRedAmount] = useState(0)
+    const [greenAmount, setGreenAmount] = useState(0)
+    const [blackAmount, setBlackAmount] = useState(0)
+
+    const [redPlayers, setRedPlayers] = useState([])
+    const [greenPlayers, setGreenPlayers] = useState([])
+    const [blackPlayers, setBlackPlayers] = useState([])
+
     const [spinDeg, setSpinDeg] = useState(0)
-    const [spinDuration, setSpinDuration] = useState(15000)
-    const [time, setTime] = useState(5)
+    const [spinDuration, setSpinDuration] = useState(raffleTime)
     const roulette = useRef()
     const [spinHistory, setSpinHistory] = useState([]);
     const spinRange = {
@@ -27,6 +41,7 @@ export default function Home() {
         * 10 = 280deg - 302.6deg
         * 3 = 304deg - 326.3deg
         * 9 = 327.7deg - 350.2deg
+        * 0 = green, 1-7 = red, 8-14 = black
         * */
         0: [63.2, 86.2],
         1: [39.2, 62.3],
@@ -51,30 +66,35 @@ export default function Home() {
         setTime(15)
     }
 
+    const giveEarnings = (randomNumber) => {
+        if (randomNumber > 0 && randomNumber <= 7) { // red
+            setRedPlayers(prevState => {
+                prevState.map((value) => {
+                    console.log(value)
+                })
+                return prevState
+            })
+        } else if (randomNumber > 7 && randomNumber <= 14) { // black
+
+        } else { // green
+        }
+    }
+
     function spin() {
-        setSpinDuration(15000)
+        setSpinDuration(raffleTime)
         const randomNumber = Math.floor(Math.random() * 15);
         const min = spinRange[randomNumber][0]
         const max = spinRange[randomNumber][1]
         const range = parseFloat((Math.random() * (max - min) + min).toFixed(1))
-        console.log(randomNumber)
         setSpinDeg(range + (360 * 5)) // spin range + (360 * spin rep)
 
         setTimeout(() => {
             spinReset(range)
             start()
-            setSpinHistory(spinHistory => [randomNumber, ...spinHistory])
-        }, 15000)
-
-        /*setTimeout(() => {
-            setSpinDeg(4000)
-        }, 2000)*/
+            setSpinHistory(prevState => [randomNumber, ...prevState])
+            giveEarnings(randomNumber)
+        }, raffleTime)
     }
-
-    useEffect(() => {
-        console.log("dd")
-        start()
-    }, [])
 
     function start() {
         const timer = setInterval(() => {
@@ -90,6 +110,53 @@ export default function Home() {
         }, 1000)
     }
 
+    function playHandle(color) {
+        if (time <= 1) {
+            return
+        }
+
+        switch (color) {
+            case "red":
+                if (redAmount.length > 1 && redAmount > 0 && !redPlayers.find(value => value.name === "Emre") && checkBalance(redAmount)) {
+                    const data = {
+                        name: "Emre",
+                        amount: parseFloat(redAmount)
+                    }
+                    setRedPlayers(prevState => [data, ...prevState])
+                    setBalance(prevState => prevState - redAmount)
+                }
+                break
+            case "green":
+                if (greenAmount.length > 1 && greenAmount > 0 && !greenPlayers.find(value => value.name === "Emre")) {
+                    const data = {
+                        name: "Emre",
+                        amount: parseFloat(greenAmount)
+                    }
+                    setGreenPlayers(prevState => [data, ...prevState])
+                    setBalance(prevState => prevState - greenAmount)
+                }
+                break
+            case "black":
+                if (blackAmount.length > 1 && blackAmount > 0 && !blackPlayers.find(value => value.name === "Emre")) {
+                    const data = {
+                        name: "Emre",
+                        amount: parseFloat(blackAmount)
+                    }
+                    setBlackPlayers(prevState => [data, ...prevState])
+                    setBalance(prevState => prevState - blackAmount)
+                }
+                break
+        }
+    }
+
+    function checkBalance(amount){
+        return balance >= parseFloat(amount);
+    }
+
+    useEffect(() => {
+        start()
+    }, [])
+
     return (
         <>
             <Head>
@@ -98,7 +165,7 @@ export default function Home() {
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <link rel="icon" href="/favicon.ico"/>
             </Head>
-            <main className="h-screen w-screen">
+            <main>
                 <div className="container mx-auto flex justify-center">
                     <div className="relative mt-10">
                         <div ref={roulette} style={{
@@ -115,8 +182,79 @@ export default function Home() {
                             className="absolute top-1/2 -right-7 -translate-y-1/2 -translate-x-1/2 border-t-[25px] border-r-[25px] border-b-[25px] border-t-transparent border-b-transparent"></div>
                     </div>
                 </div>
-                <div className="flex justify-center gap-5 mt-5">
-                    {spinHistory.map((value, index) => <div className="text-lg font-bold" key={index}>{value}</div>)}
+                <div className="flex justify-center gap-3 mt-10">
+                    {spinHistory.slice(0, 10).map((value, index) => {
+                        if (value > 0 && value <= 7) {
+                            return <div
+                                className={`w-8 h-8 flex justify-center items-center rounded-full text-base font-bold bg-red-600`}
+                                key={index}>{value}</div>
+                        } else if (value > 7 && value <= 14) {
+                            return <div
+                                className={`w-8 h-8 flex justify-center items-center rounded-full text-base font-bold bg-black`}
+                                key={index}>{value}</div>
+                        } else {
+                            return <div
+                                className={`w-8 h-8 flex justify-center items-center rounded-full text-base font-bold bg-green-500`}
+                                key={index}>{value}</div>
+                        }
+                    })}
+                </div>
+                <div className="container mx-auto mt-10">
+                    <div className="text-lg font-bold">
+                        Balance: {balance}
+                    </div>
+                </div>
+                <div className="container mx-auto flex mt-5 gap-14">
+                    <div className="flex-1">
+                        <button disabled={time <= 1} onClick={() => playHandle("red")}
+                             className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-red-500 hover:bg-red-700"}`}>
+                            1 to 7
+                        </button>
+                        <div className="mt-3">
+                            <input
+                                className="w-full p-2 text-center text-black text-lg outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                type="number" onChange={e => setRedAmount(e.target.value)} min={0} value={redAmount}/>
+                        </div>
+                        <div className="mt-3">
+                            {redPlayers.map((value, index) =>
+                                <div key={index} className="text-lg">{value.name} - {value.amount}</div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex-1">
+                        <button disabled={time <= 1} onClick={() => playHandle("green")}
+                             className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-green-500 hover:bg-green-700"}`}>
+                            0
+                        </button>
+                        <div className="mt-3">
+                            <input
+                                className="w-full p-2 text-center text-black text-lg outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                type="number" onChange={e => setGreenAmount(e.target.value)} min={0}
+                                value={greenAmount}/>
+                        </div>
+                        <div className="mt-3">
+                            {greenPlayers.map((value, index) =>
+                                <div key={index} className="text-lg">{value.name} - {value.amount}</div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex-1">
+                        <button disabled={time <= 1} onClick={() => playHandle("black")}
+                             className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-black hover:bg-gray-950"}`}>
+                            8 to 14
+                        </button>
+                        <div className="mt-3">
+                            <input
+                                className="w-full p-2 text-center text-black text-lg outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                type="number" onChange={e => setBlackAmount(e.target.value)} min={0}
+                                value={blackAmount}/>
+                        </div>
+                        <div className="mt-3">
+                            {blackPlayers.map((value, index) =>
+                                <div key={index} className="text-lg">{value.name} - {value.amount}</div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </main>
         </>
