@@ -6,15 +6,13 @@ import {useEffect, useRef, useState} from "react";
 
 export default function Home() {
     const raffleTime = 3000
-    const spinTime = 4
+    const spinTime = 15
 
     const [time, setTime] = useState(spinTime)
 
     const [balance, setBalance] = useState(10000)
 
-    const [redAmount, setRedAmount] = useState(0)
-    const [greenAmount, setGreenAmount] = useState(0)
-    const [blackAmount, setBlackAmount] = useState(0)
+    const [amount, setAmount] = useState(0)
 
     const [redPlayers, setRedPlayers] = useState([])
     const [greenPlayers, setGreenPlayers] = useState([])
@@ -63,21 +61,36 @@ export default function Home() {
     function spinReset(range) {
         setSpinDuration(0)
         setSpinDeg(range - (360 * 5))
-        setTime(15)
+        setTime(spinTime)
     }
 
     const giveEarnings = (randomNumber) => {
         if (randomNumber > 0 && randomNumber <= 7) { // red
             setRedPlayers(prevState => {
                 prevState.map((value) => {
-                    console.log(value)
+                    setBalance(prevState => prevState + value.amount * 2)
                 })
                 return prevState
             })
         } else if (randomNumber > 7 && randomNumber <= 14) { // black
-
+            setBlackPlayers(prevState => {
+                prevState.map((value) => {
+                    setBalance(prevState => prevState + value.amount * 2)
+                })
+                return prevState
+            })
         } else { // green
+            setGreenPlayers(prevState => {
+                prevState.map((value) => {
+                    setBalance(prevState => prevState + value.amount * 14)
+                })
+                return prevState
+            })
         }
+
+        setRedPlayers([])
+        setBlackPlayers([])
+        setGreenPlayers([])
     }
 
     function spin() {
@@ -115,42 +128,44 @@ export default function Home() {
             return
         }
 
-        switch (color) {
-            case "red":
-                if (redAmount.length > 1 && redAmount > 0 && !redPlayers.find(value => value.name === "Emre") && checkBalance(redAmount)) {
-                    const data = {
-                        name: "Emre",
-                        amount: parseFloat(redAmount)
+        if(amount.toString().length > 1 && amount > 0 && checkBalance(amount)){
+            switch (color) {
+                case "red":
+                    if (!redPlayers.find(value => value.name === "Emre")) {
+                        const data = {
+                            name: "Emre",
+                            amount: parseInt(amount)
+                        }
+                        setRedPlayers(prevState => [data, ...prevState])
+                        setBalance(prevState => prevState - amount)
                     }
-                    setRedPlayers(prevState => [data, ...prevState])
-                    setBalance(prevState => prevState - redAmount)
-                }
-                break
-            case "green":
-                if (greenAmount.length > 1 && greenAmount > 0 && !greenPlayers.find(value => value.name === "Emre")) {
-                    const data = {
-                        name: "Emre",
-                        amount: parseFloat(greenAmount)
+                    break
+                case "green":
+                    if (!greenPlayers.find(value => value.name === "Emre")) {
+                        const data = {
+                            name: "Emre",
+                            amount: parseInt(amount)
+                        }
+                        setGreenPlayers(prevState => [data, ...prevState])
+                        setBalance(prevState => prevState - amount)
                     }
-                    setGreenPlayers(prevState => [data, ...prevState])
-                    setBalance(prevState => prevState - greenAmount)
-                }
-                break
-            case "black":
-                if (blackAmount.length > 1 && blackAmount > 0 && !blackPlayers.find(value => value.name === "Emre")) {
-                    const data = {
-                        name: "Emre",
-                        amount: parseFloat(blackAmount)
+                    break
+                case "black":
+                    if (!blackPlayers.find(value => value.name === "Emre")) {
+                        const data = {
+                            name: "Emre",
+                            amount: parseInt(amount)
+                        }
+                        setBlackPlayers(prevState => [data, ...prevState])
+                        setBalance(prevState => prevState - amount)
                     }
-                    setBlackPlayers(prevState => [data, ...prevState])
-                    setBalance(prevState => prevState - blackAmount)
-                }
-                break
+                    break
+            }
         }
     }
 
     function checkBalance(amount){
-        return balance >= parseFloat(amount);
+        return balance >= parseInt(amount);
     }
 
     useEffect(() => {
@@ -203,6 +218,41 @@ export default function Home() {
                     <div className="text-lg font-bold">
                         Balance: {balance}
                     </div>
+                    <div className="mt-3 inline-flex items-center gap-3">
+                        <button className="px-3 py-1 bg-green-600" onClick={() => setAmount(prevState => parseInt(prevState + 10))}>
+                            +10
+                        </button>
+                        <button className="px-3 py-1 bg-green-600" onClick={() => setAmount(prevState => parseInt(prevState + 100))}>
+                            +100
+                        </button>
+                        <button className="px-3 py-1 bg-green-600" onClick={() => setAmount(prevState => parseInt(prevState + 1000))}>
+                            +1000
+                        </button>
+                        <button className="px-3 py-1 bg-green-600" onClick={() => setAmount(prevState => parseInt(prevState + prevState / 2))}>
+                            +50%
+                        </button>
+                        <button className="px-3 py-1 bg-red-600" onClick={() => setAmount(prevState => parseInt(prevState - prevState / 2))}>
+                            -50%
+                        </button>
+                        <button className="px-3 py-1 bg-red-600" onClick={() => setAmount(prevState => parseInt(prevState - 1000))}>
+                            -1000
+                        </button>
+                        <button className="px-3 py-1 bg-red-600" onClick={() => setAmount(prevState => parseInt(prevState - 100))}>
+                            -100
+                        </button>
+                        <button className="px-3 py-1 bg-red-600" onClick={() => setAmount(prevState => parseInt(prevState - 10))}>
+                            -10
+                        </button>
+                        <button className="px-3 py-1 bg-gray-600" onClick={() => setAmount(0)}>
+                            Clear
+                        </button>
+                    </div>
+                    <div className="mt-4">
+                        <input
+                           className="w-1/4 p-2 text-center text-black text-lg outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                           type="number" onChange={e => setAmount(parseInt(e.target.value))} min={0}
+                           value={amount}/>
+                    </div>
                 </div>
                 <div className="container mx-auto flex mt-5 gap-14">
                     <div className="flex-1">
@@ -210,11 +260,6 @@ export default function Home() {
                              className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-red-500 hover:bg-red-700"}`}>
                             1 to 7
                         </button>
-                        <div className="mt-3">
-                            <input
-                                className="w-full p-2 text-center text-black text-lg outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                type="number" onChange={e => setRedAmount(e.target.value)} min={0} value={redAmount}/>
-                        </div>
                         <div className="mt-3">
                             {redPlayers.map((value, index) =>
                                 <div key={index} className="text-lg">{value.name} - {value.amount}</div>
@@ -227,12 +272,6 @@ export default function Home() {
                             0
                         </button>
                         <div className="mt-3">
-                            <input
-                                className="w-full p-2 text-center text-black text-lg outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                type="number" onChange={e => setGreenAmount(e.target.value)} min={0}
-                                value={greenAmount}/>
-                        </div>
-                        <div className="mt-3">
                             {greenPlayers.map((value, index) =>
                                 <div key={index} className="text-lg">{value.name} - {value.amount}</div>
                             )}
@@ -243,12 +282,6 @@ export default function Home() {
                              className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-black hover:bg-gray-950"}`}>
                             8 to 14
                         </button>
-                        <div className="mt-3">
-                            <input
-                                className="w-full p-2 text-center text-black text-lg outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                type="number" onChange={e => setBlackAmount(e.target.value)} min={0}
-                                value={blackAmount}/>
-                        </div>
                         <div className="mt-3">
                             {blackPlayers.map((value, index) =>
                                 <div key={index} className="text-lg">{value.name} - {value.amount}</div>
