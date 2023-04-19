@@ -3,6 +3,7 @@ import Image from "next/image";
 
 import roulettePng from "/public/roulette.png"
 import {useEffect, useRef, useState} from "react";
+import socket from "@/utils/socket";
 
 export default function Home() {
     const raffleTime = 3000
@@ -124,6 +125,12 @@ export default function Home() {
     }
 
     function playHandle(color) {
+        console.log("dd")
+        socket.emit("playHandle", {
+            color: color,
+            amount: amount
+        });
+
         if (time <= 1) {
             return
         }
