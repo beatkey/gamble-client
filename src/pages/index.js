@@ -125,7 +125,6 @@ export default function Home() {
     }
 
     function playHandle(color) {
-        console.log("dd")
         socket.emit("playHandle", {
             color: color,
             amount: amount

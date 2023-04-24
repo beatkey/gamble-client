@@ -1,11 +1,21 @@
 import {TextField, Button} from "@mui/material";
 import {useState} from "react";
+import { useSession, signIn, signOut } from "next-auth/react"
 
 export default function Login() {
+    console.log(useSession())
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
 
     const submitHandle = async (e) => {
+        e.preventDefault();
+        const result = await signIn("credentials", {
+            email,
+            password
+        })
+    }
+
+    /*const submitHandle = async (e) => {
         e.preventDefault();
         const res = await fetch("http://localhost:3001/auth/login", {
             method: "POST",
@@ -19,7 +29,8 @@ export default function Login() {
         })
         const result = await res.json()
         console.log(result)
-    };
+    };*/
+
     return (
         <div className="h-screen w-screen flex items-center justify-center">
             <form onSubmit={submitHandle}>
