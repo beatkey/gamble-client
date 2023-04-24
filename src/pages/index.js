@@ -4,8 +4,12 @@ import Image from "next/image";
 import roulettePng from "/public/roulette.png"
 import {useEffect, useRef, useState} from "react";
 import socket from "@/utils/socket";
+import {signOut, useSession} from "next-auth/react";
+import {Button} from "@mui/material";
+import Link from "next/link";
 
 export default function Home() {
+    const session = useSession()
     const raffleTime = 3000
     const spinTime = 15
 
@@ -187,6 +191,23 @@ export default function Home() {
                 <link rel="icon" href="/favicon.ico"/>
             </Head>
             <main>
+                <div className="flex p-3">
+                    <div className="ml-auto">
+                        {
+                            session.status === "authenticated" ?
+                               <div className="flex items-center gap-5">
+                                   {session.data.user.name}
+                                   <Button type="button" onClick={() => signOut()} className="w-full" variant="outlined">Logout</Button>
+                               </div>
+                               :
+                               <>
+                                   <Link href={'/login'}>
+                                       <Button type="button" className="w-full" variant="outlined">Login</Button>
+                                   </Link>
+                               </>
+                        }
+                    </div>
+                </div>
                 <div className="container mx-auto flex justify-center">
                     <div className="relative mt-10">
                         <div ref={roulette} style={{
