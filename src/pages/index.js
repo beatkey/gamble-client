@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Image from "next/image";
+import {getSession} from "next-auth/react";
 
 import roulettePng from "/public/roulette.png"
 import {useEffect, useRef, useState} from "react";
@@ -7,9 +8,11 @@ import socket from "@/utils/socket";
 import {signOut, useSession} from "next-auth/react";
 import {Button} from "@mui/material";
 import Link from "next/link";
+import {toast} from "react-toastify";
 
 export default function Home() {
     const session = useSession()
+    //console.log(session)
     const raffleTime = 3000
     const spinTime = 15
 
@@ -133,12 +136,19 @@ export default function Home() {
             color: color,
             amount: amount
         });
+        if(session && session.status === "unauthenticated"){
+            toast("You need to login to play.", {
+                type: "error",
+                position: "top-right",
+            });
+            return;
+        }
 
         if (time <= 1) {
             return
         }
 
-        if(amount.toString().length > 1 && amount > 0 && checkBalance(amount)){
+        if (amount.toString().length > 1 && amount > 0 && checkBalance(amount)) {
             switch (color) {
                 case "red":
                     if (!redPlayers.find(value => value.name === "Emre")) {
@@ -174,7 +184,7 @@ export default function Home() {
         }
     }
 
-    function checkBalance(amount){
+    function checkBalance(amount) {
         return balance >= parseInt(amount);
     }
 
@@ -195,16 +205,22 @@ export default function Home() {
                     <div className="ml-auto">
                         {
                             session.status === "authenticated" ?
-                               <div className="flex items-center gap-5">
-                                   {session.data.user.name}
-                                   <Button type="button" onClick={() => signOut()} className="w-full" variant="outlined">Logout</Button>
-                               </div>
-                               :
-                               <>
-                                   <Link href={'/login'}>
-                                       <Button type="button" className="w-full" variant="outlined">Login</Button>
-                                   </Link>
-                               </>
+                                <div className="flex items-center gap-5">
+                                    <div className="min-w-fit">
+                                        {session.data.user.name + " " + session.data.user.surname}
+                                    </div>
+                                    <div className="min-w-fit">
+                                        Balance: {session.data.user.balance}
+                                    </div>
+                                    <Button type="button" onClick={() => signOut()} className="w-full"
+                                            variant="outlined">Logout</Button>
+                                </div>
+                                :
+                                <>
+                                    <Link href={'/login'}>
+                                        <Button type="button" className="w-full" variant="outlined">Login</Button>
+                                    </Link>
+                                </>
                         }
                     </div>
                 </div>
@@ -246,28 +262,36 @@ export default function Home() {
                         Balance: {balance}
                     </div>
                     <div className="mt-3 inline-flex items-center gap-3">
-                        <button className="px-3 py-1 bg-green-600" onClick={() => setAmount(prevState => parseInt(prevState + 10))}>
+                        <button className="px-3 py-1 bg-green-600"
+                                onClick={() => setAmount(prevState => parseInt(prevState + 10))}>
                             +10
                         </button>
-                        <button className="px-3 py-1 bg-green-600" onClick={() => setAmount(prevState => parseInt(prevState + 100))}>
+                        <button className="px-3 py-1 bg-green-600"
+                                onClick={() => setAmount(prevState => parseInt(prevState + 100))}>
                             +100
                         </button>
-                        <button className="px-3 py-1 bg-green-600" onClick={() => setAmount(prevState => parseInt(prevState + 1000))}>
+                        <button className="px-3 py-1 bg-green-600"
+                                onClick={() => setAmount(prevState => parseInt(prevState + 1000))}>
                             +1000
                         </button>
-                        <button className="px-3 py-1 bg-green-600" onClick={() => setAmount(prevState => parseInt(prevState + prevState / 2))}>
+                        <button className="px-3 py-1 bg-green-600"
+                                onClick={() => setAmount(prevState => parseInt(prevState + prevState / 2))}>
                             +50%
                         </button>
-                        <button className="px-3 py-1 bg-red-600" onClick={() => setAmount(prevState => parseInt(prevState - prevState / 2))}>
+                        <button className="px-3 py-1 bg-red-600"
+                                onClick={() => setAmount(prevState => parseInt(prevState - prevState / 2))}>
                             -50%
                         </button>
-                        <button className="px-3 py-1 bg-red-600" onClick={() => setAmount(prevState => parseInt(prevState - 1000))}>
+                        <button className="px-3 py-1 bg-red-600"
+                                onClick={() => setAmount(prevState => parseInt(prevState - 1000))}>
                             -1000
                         </button>
-                        <button className="px-3 py-1 bg-red-600" onClick={() => setAmount(prevState => parseInt(prevState - 100))}>
+                        <button className="px-3 py-1 bg-red-600"
+                                onClick={() => setAmount(prevState => parseInt(prevState - 100))}>
                             -100
                         </button>
-                        <button className="px-3 py-1 bg-red-600" onClick={() => setAmount(prevState => parseInt(prevState - 10))}>
+                        <button className="px-3 py-1 bg-red-600"
+                                onClick={() => setAmount(prevState => parseInt(prevState - 10))}>
                             -10
                         </button>
                         <button className="px-3 py-1 bg-gray-600" onClick={() => setAmount(0)}>
@@ -276,15 +300,15 @@ export default function Home() {
                     </div>
                     <div className="mt-4">
                         <input
-                           className="w-1/4 p-2 text-center text-black text-lg outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                           type="number" onChange={e => setAmount(parseInt(e.target.value))} min={0}
-                           value={amount}/>
+                            className="w-1/4 p-2 text-center text-black text-lg outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            type="number" onChange={e => setAmount(parseInt(e.target.value))} min={0}
+                            value={amount}/>
                     </div>
                 </div>
                 <div className="container mx-auto flex mt-5 gap-14">
                     <div className="flex-1">
                         <button disabled={time <= 1} onClick={() => playHandle("red")}
-                             className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-red-500 hover:bg-red-700"}`}>
+                                className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-red-500 hover:bg-red-700"}`}>
                             1 to 7
                         </button>
                         <div className="mt-3">
@@ -295,7 +319,7 @@ export default function Home() {
                     </div>
                     <div className="flex-1">
                         <button disabled={time <= 1} onClick={() => playHandle("green")}
-                             className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-green-500 hover:bg-green-700"}`}>
+                                className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-green-500 hover:bg-green-700"}`}>
                             0
                         </button>
                         <div className="mt-3">
@@ -306,7 +330,7 @@ export default function Home() {
                     </div>
                     <div className="flex-1">
                         <button disabled={time <= 1} onClick={() => playHandle("black")}
-                             className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-black hover:bg-gray-950"}`}>
+                                className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-black hover:bg-gray-950"}`}>
                             8 to 14
                         </button>
                         <div className="mt-3">

@@ -32,8 +32,34 @@ export const authOptions = {
             }
         })
     ],
+    callbacks: {
+        jwt: async ({ token, user }) => {
+            if (user) {
+                token.name = user.name;
+                token.surname = user.surname;
+                token.email = user.email;
+                token.accessToken = user.token;
+                token.balance = user.balance;
+                token.accessTokenExpiry = user.accessTokenExpiry;
+            }
+
+            return token;
+        },
+        session: ({ session, token, user }) => {
+            if (token) {
+                session.user.name = token.name;
+                session.user.surname = token.surname;
+                session.user.email = token.email;
+                session.user.accessToken = token.token;
+                session.user.accessTokenExpiry = token.accessTokenExpiry;
+                session.user.balance = token.balance;
+            }
+            return session;
+        },
+    },
     session: {
-        strategy: "jwt"
+        strategy: "jwt",
+        //maxAge: 10,
     },
     pages: {
         signIn: "/login"

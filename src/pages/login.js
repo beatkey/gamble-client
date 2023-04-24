@@ -7,8 +7,8 @@ import {useRouter} from "next/router";
 export default function Login() {
    const router = useRouter()
    const session = useSession()
-   const [email, setEmail] = useState("")
-   const [password, setPassword] = useState("")
+   const [email, setEmail] = useState("test@gmail.com")
+   const [password, setPassword] = useState("123123")
 
    const submitHandle = async (e) => {
       e.preventDefault();
@@ -42,7 +42,11 @@ export default function Login() {
             }
          })
       } catch (e) {
-         console.log(e)
+         console.error(e)
+         toast("Server Error", {
+            type: "error",
+            position: "top-right",
+         });
       }
    }
 
