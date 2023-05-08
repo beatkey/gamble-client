@@ -1,6 +1,5 @@
 import Head from "next/head";
 import Image from "next/image";
-import {getSession} from "next-auth/react";
 
 import roulettePng from "/public/roulette.png"
 import {useEffect, useRef, useState} from "react";
@@ -132,10 +131,6 @@ export default function Home() {
     }
 
     function playHandle(color) {
-        socket.emit("playHandle", {
-            color: color,
-            amount: amount
-        });
         if(session && session.status === "unauthenticated"){
             toast("You need to login to play.", {
                 type: "error",
@@ -148,7 +143,34 @@ export default function Home() {
             return
         }
 
+        if (!socket.connected){
+            toast("Server error", {
+                type: "error",
+                position: "top-right",
+            });
+            return;
+        }
+
         if (amount.toString().length > 1 && amount > 0 && checkBalance(amount)) {
+            console.log(session.data)
+            socket.emit("playHandle", {
+                color: color,
+                amount: amount,
+                token: session.data.user.accessToken
+            }, (res) => {
+                console.log(res)
+                if (res.status){
+                    toast(`${color.charAt(0).toUpperCase() + color.slice(1)} ${amount} played.`, {
+                        type: "success",
+                        position: "top-right",
+                    });
+                }else{
+                    toast(res.message, {
+                        type: "error",
+                        position: "top-right",
+                    });
+                }
+            });
             switch (color) {
                 case "red":
                     if (!redPlayers.find(value => value.name === "Emre")) {

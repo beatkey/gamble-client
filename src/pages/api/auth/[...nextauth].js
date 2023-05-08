@@ -43,14 +43,22 @@ export const authOptions = {
                 token.accessTokenExpiry = user.accessTokenExpiry;
             }
 
-            return token;
+            const shouldRefreshTime = token.accessTokenExpiry - Date.now();
+            // TODO
+            return token
+            /*console.log(shouldRefreshTime, token.accessTokenExpiry, Date.now())
+            if (shouldRefreshTime > 0){
+                return token;
+            }
+
+            return null*/
         },
-        session: ({ session, token, user }) => {
+        session: ({ session, token }) => {
             if (token) {
                 session.user.name = token.name;
                 session.user.surname = token.surname;
                 session.user.email = token.email;
-                session.user.accessToken = token.token;
+                session.user.accessToken = token.accessToken;
                 session.user.accessTokenExpiry = token.accessTokenExpiry;
                 session.user.balance = token.balance;
             }
@@ -59,7 +67,7 @@ export const authOptions = {
     },
     session: {
         strategy: "jwt",
-        //maxAge: 10,
+        //maxAge: 86400,
     },
     pages: {
         signIn: "/login"
