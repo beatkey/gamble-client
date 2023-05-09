@@ -8,14 +8,14 @@ import {signOut, useSession} from "next-auth/react";
 import {Button} from "@mui/material";
 import Link from "next/link";
 import {toast} from "react-toastify";
-import process from "next/dist/build/webpack/loaders/resolve-url-loader/lib/postcss";
 
 export default function Home() {
     const session = useSession()
     //console.log(session)
     const raffleTime = 3000
+    const spinTime = 15
 
-    const [time, setTime] = useState(null)
+    const [time, setTime] = useState(spinTime)
 
     const [balance, setBalance] = useState(10000)
 
@@ -26,13 +26,49 @@ export default function Home() {
     const [blackPlayers, setBlackPlayers] = useState([])
 
     const [spinDeg, setSpinDeg] = useState(0)
-    const [spinDuration, setSpinDuration] = useState(0)
+    const [spinDuration, setSpinDuration] = useState(raffleTime)
     const roulette = useRef()
-    const [spinHistory, setSpinHistory] = useState([])
+    const [spinHistory, setSpinHistory] = useState([]);
+    const spinRange = {
+        /*
+        * 2 = -9deg - 14.3deg
+        * 8 = 15deg - 38.2deg
+        * 1 = 39.2deg - 62.3deg
+        * 0 = 63.2deg - 86.2deg
+        * 14 = 86.9deg - 110.6deg
+        * 7 = 111.6deg - 134.4deg
+        * 13 = 135.6deg - 158.6deg
+        * 6 = 160deg - 182.7deg
+        * 12 = 184deg - 206.8deg
+        * 5 = 208.2deg - 230.8deg
+        * 11 = 232.2deg - 254.8deg
+        * 4 = 256.4deg - 278.7deg
+        * 10 = 280deg - 302.6deg
+        * 3 = 304deg - 326.3deg
+        * 9 = 327.7deg - 350.2deg
+        * 0 = green, 1-7 = red, 8-14 = black
+        * */
+        0: [63.2, 86.2],
+        1: [39.2, 62.3],
+        2: [-9, 14.3],
+        3: [304, 326.3],
+        4: [256.4, 278.7],
+        5: [208.2, 230.8],
+        6: [160, 182.7],
+        7: [111.6, 134.4],
+        8: [15, 38.2],
+        9: [327.7, 350.2],
+        10: [280, 302.6],
+        11: [232.2, 254.8],
+        12: [184, 206.8],
+        13: [135.6, 158.6],
+        14: [86.9, 110.6],
+    }
 
     function spinReset(range) {
         setSpinDuration(0)
         setSpinDeg(range - (360 * 5))
+        setTime(spinTime)
     }
 
     const giveEarnings = (randomNumber) => {
@@ -64,21 +100,38 @@ export default function Home() {
         setGreenPlayers([])
     }
 
-    function spin(randomNumber, range, raffleTime) {
+    function spin() {
         setSpinDuration(raffleTime)
+        const randomNumber = Math.floor(Math.random() * 15);
+        const min = spinRange[randomNumber][0]
+        const max = spinRange[randomNumber][1]
+        const range = parseFloat((Math.random() * (max - min) + min).toFixed(1))
         setSpinDeg(range + (360 * 5)) // spin range + (360 * spin rep)
 
         setTimeout(() => {
             spinReset(range)
-            setSpinHistory(prevState => [{
-                number: randomNumber
-            }, ...prevState])
+            start()
+            setSpinHistory(prevState => [randomNumber, ...prevState])
             giveEarnings(randomNumber)
         }, raffleTime)
     }
 
+    function start() {
+        const timer = setInterval(() => {
+            setTime(time => {
+                if (time > 0) {
+                    return time - 1
+                } else {
+                    spin()
+                    clearInterval(timer)
+                    return 0
+                }
+            })
+        }, 1000)
+    }
+
     function playHandle(color) {
-        if (session && session.status === "unauthenticated") {
+        if(session && session.status === "unauthenticated"){
             toast("You need to login to play.", {
                 type: "error",
                 position: "top-right",
@@ -90,7 +143,7 @@ export default function Home() {
             return
         }
 
-        if (!socket.connected) {
+        if (!socket.connected){
             toast("Server error", {
                 type: "error",
                 position: "top-right",
@@ -106,7 +159,7 @@ export default function Home() {
                 token: session.data.user.accessToken
             }, (res) => {
                 console.log(res)
-                if (res.status) {
+                if (res.status){
                     switch (color) {
                         case "red":
                             if (!redPlayers.find(value => value.name === "Emre")) {
@@ -144,7 +197,7 @@ export default function Home() {
                         type: "success",
                         position: "top-right",
                     });
-                } else {
+                }else{
                     toast(res.message, {
                         type: "error",
                         position: "top-right",
@@ -158,31 +211,10 @@ export default function Home() {
         return balance >= parseInt(amount);
     }
 
-    async function fetchSpinHistory() {
-        const res = await fetch("http://localhost:3001/games/spin-history", {
-            method: "GET",
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        if (res.status === 200){
-            const result = await res.json()
-            setSpinHistory(result.data)
-        }
-    }
-
     useEffect(() => {
-        fetchSpinHistory()
-
-        socket.on("getGameTime", (time) => {
-            setTime(time)
-        });
-
-        socket.on("spin", ({randomNumber, range, raffleTime}) => {
-            console.log(randomNumber, range, raffleTime)
-            spin(randomNumber, range, raffleTime)
-        });
+        //start()
     }, [])
+
 
     return (
         <>
@@ -234,18 +266,18 @@ export default function Home() {
                 </div>
                 <div className="flex justify-center gap-3 mt-10">
                     {spinHistory.slice(0, 10).map((value, index) => {
-                        if (value.number > 0 && value.number <= 7) {
+                        if (value > 0 && value <= 7) {
                             return <div
                                 className={`w-8 h-8 flex justify-center items-center rounded-full text-base font-bold bg-red-600`}
-                                key={index}>{value.number}</div>
-                        } else if (value.number > 7 && value.number <= 14) {
+                                key={index}>{value}</div>
+                        } else if (value > 7 && value <= 14) {
                             return <div
                                 className={`w-8 h-8 flex justify-center items-center rounded-full text-base font-bold bg-black`}
-                                key={index}>{value.number}</div>
+                                key={index}>{value}</div>
                         } else {
                             return <div
                                 className={`w-8 h-8 flex justify-center items-center rounded-full text-base font-bold bg-green-500`}
-                                key={index}>{value.number}</div>
+                                key={index}>{value}</div>
                         }
                     })}
                 </div>
