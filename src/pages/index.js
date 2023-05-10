@@ -8,16 +8,16 @@ import {signOut, useSession} from "next-auth/react";
 import {Button} from "@mui/material";
 import Link from "next/link";
 import {toast} from "react-toastify";
-import process from "next/dist/build/webpack/loaders/resolve-url-loader/lib/postcss";
+import {useDispatch, useSelector} from "react-redux";
+import {setBalance} from "@/stores/user";
 
 export default function Home() {
+    const dispatch = useDispatch()
     const session = useSession()
     //console.log(session)
-    const raffleTime = 3000
 
+    const {balance} = useSelector(state => state.user)
     const [time, setTime] = useState(null)
-
-    const [balance, setBalance] = useState(10000)
 
     const [amount, setAmount] = useState(0)
 
@@ -99,46 +99,13 @@ export default function Home() {
         }
 
         if (amount.toString().length > 1 && amount > 0 && checkBalance(amount)) {
-            console.log(session.data)
             socket.emit("playHandle", {
                 color: color,
                 amount: amount,
                 token: session.data.user.accessToken
             }, (res) => {
-                console.log(res)
                 if (res.status) {
-                    switch (color) {
-                        case "red":
-                            if (!redPlayers.find(value => value.name === "Emre")) {
-                                const data = {
-                                    name: "Emre",
-                                    amount: parseInt(amount)
-                                }
-                                setRedPlayers(prevState => [data, ...prevState])
-                                setBalance(prevState => prevState - amount)
-                            }
-                            break
-                        case "green":
-                            if (!greenPlayers.find(value => value.name === "Emre")) {
-                                const data = {
-                                    name: "Emre",
-                                    amount: parseInt(amount)
-                                }
-                                setGreenPlayers(prevState => [data, ...prevState])
-                                setBalance(prevState => prevState - amount)
-                            }
-                            break
-                        case "black":
-                            if (!blackPlayers.find(value => value.name === "Emre")) {
-                                const data = {
-                                    name: "Emre",
-                                    amount: parseInt(amount)
-                                }
-                                setBlackPlayers(prevState => [data, ...prevState])
-                                setBalance(prevState => prevState - amount)
-                            }
-                            break
-                    }
+                    dispatch(setBalance(balance - amount))
 
                     toast(`${color.charAt(0).toUpperCase() + color.slice(1)} ${amount} played.`, {
                         type: "success",
@@ -179,8 +146,19 @@ export default function Home() {
         });
 
         socket.on("spin", ({randomNumber, range, raffleTime}) => {
-            console.log(randomNumber, range, raffleTime)
             spin(randomNumber, range, raffleTime)
+        });
+
+        socket.on("updatePlayers", (players) => {
+            setRedPlayers(players.red)
+            setGreenPlayers(players.green)
+            setBlackPlayers(players.black)
+        });
+
+        socket.emit("updatePlayers", (players) => {
+            setRedPlayers(players.red)
+            setGreenPlayers(players.green)
+            setBlackPlayers(players.black)
         });
     }, [])
 
@@ -202,7 +180,7 @@ export default function Home() {
                                         {session.data.user.name + " " + session.data.user.surname}
                                     </div>
                                     <div className="min-w-fit">
-                                        Balance: {session.data.user.balance}
+                                        Balance: {balance}
                                     </div>
                                     <Button type="button" onClick={() => signOut()} className="w-full"
                                             variant="outlined">Logout</Button>

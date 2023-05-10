@@ -54,6 +54,7 @@ export const authOptions = {
             return null*/
         },
         session: ({ session, token }) => {
+            //console.log(token)
             if (token) {
                 session.user.name = token.name;
                 session.user.surname = token.surname;
