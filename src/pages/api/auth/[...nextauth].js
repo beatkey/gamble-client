@@ -43,18 +43,9 @@ export const authOptions = {
                 token.accessTokenExpiry = user.accessTokenExpiry;
             }
 
-            const shouldRefreshTime = token.accessTokenExpiry - Date.now();
-            // TODO
             return token
-            /*console.log(shouldRefreshTime, token.accessTokenExpiry, Date.now())
-            if (shouldRefreshTime > 0){
-                return token;
-            }
-
-            return null*/
         },
         session: ({ session, token }) => {
-            //console.log(token)
             if (token) {
                 session.user.name = token.name;
                 session.user.surname = token.surname;

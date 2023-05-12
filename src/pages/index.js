@@ -9,14 +9,15 @@ import {Button} from "@mui/material";
 import Link from "next/link";
 import {toast} from "react-toastify";
 import {useDispatch, useSelector} from "react-redux";
-import {setBalance} from "@/stores/user";
+import {setBalance as setRootBalance} from "@/stores/user";
 
 export default function Home() {
     const dispatch = useDispatch()
     const session = useSession()
-    //console.log(session)
 
-    const {balance} = useSelector(state => state.user)
+    const balanceRoot = useSelector(state => state.user.balance)
+    const [balance, setBalance] = useState(null)
+
     const [time, setTime] = useState(null)
 
     const [amount, setAmount] = useState(0)
@@ -28,40 +29,50 @@ export default function Home() {
     const [spinDeg, setSpinDeg] = useState(0)
     const [spinDuration, setSpinDuration] = useState(0)
     const roulette = useRef()
+
     const [spinHistory, setSpinHistory] = useState([])
 
+    const [playedColor, setPlayedColor] = useState([])
+    const [winAmount, setWinAmount] = useState(null)
+    if (winAmount){
+        console.log(winAmount)
+    }
     function spinReset(range) {
         setSpinDuration(0)
         setSpinDeg(range - (360 * 5))
     }
 
-    const giveEarnings = (randomNumber) => {
+    const giveEarning = (randomNumber) => {
         if (randomNumber > 0 && randomNumber <= 7) { // red
-            setRedPlayers(prevState => {
-                prevState.map((value) => {
-                    setBalance(prevState => prevState + value.amount * 2)
-                })
-                return prevState
+            setPlayedColor(prevState => {
+                const data = prevState.find(value => value.color === "red")
+                if (data){
+                    setWinAmount(data.amount * 2)
+                    setBalance(prevState => prevState + data.amount * 2)
+                }
             })
         } else if (randomNumber > 7 && randomNumber <= 14) { // black
-            setBlackPlayers(prevState => {
-                prevState.map((value) => {
-                    setBalance(prevState => prevState + value.amount * 2)
-                })
-                return prevState
+            setPlayedColor(prevState => {
+                const data = prevState.find(value => value.color === "black")
+                if (data){
+                    setWinAmount(data.amount * 2)
+                    setBalance(prevState => prevState + data.amount * 2)
+                }
             })
         } else { // green
-            setGreenPlayers(prevState => {
-                prevState.map((value) => {
-                    setBalance(prevState => prevState + value.amount * 14)
-                })
-                return prevState
+            setPlayedColor(prevState => {
+                const data = prevState.find(value => value.color === "green")
+                if (data){
+                    setWinAmount(data.amount * 2)
+                    setBalance(prevState => prevState + data.amount * 14)
+                }
             })
         }
 
-        setRedPlayers([])
-        setBlackPlayers([])
-        setGreenPlayers([])
+        setPlayedColor([])
+        setTimeout(() => {
+            setWinAmount(null)
+        }, 2000)
     }
 
     function spin(randomNumber, range, raffleTime) {
@@ -73,7 +84,7 @@ export default function Home() {
             setSpinHistory(prevState => [{
                 number: randomNumber
             }, ...prevState])
-            giveEarnings(randomNumber)
+            giveEarning(randomNumber)
         }, raffleTime)
     }
 
@@ -105,7 +116,9 @@ export default function Home() {
                 token: session.data.user.accessToken
             }, (res) => {
                 if (res.status) {
-                    dispatch(setBalance(balance - amount))
+                    dispatch(setRootBalance(balance - amount))
+
+                    setPlayedColor(prevState => [...prevState, {color, amount}])
 
                     toast(`${color.charAt(0).toUpperCase() + color.slice(1)} ${amount} played.`, {
                         type: "success",
@@ -141,9 +154,7 @@ export default function Home() {
         }
     }
 
-    useEffect(() => {
-        fetchSpinHistory()
-
+    function socketHandle(){
         socket.on("getGameTime", (time) => {
             setTime(time)
         });
@@ -163,7 +174,16 @@ export default function Home() {
             setGreenPlayers(players.green)
             setBlackPlayers(players.black)
         });
+    }
+
+    useEffect(() => {
+        fetchSpinHistory()
+        socketHandle()
     }, [])
+
+    useEffect(() => {
+        setBalance(balanceRoot)
+    }, [balanceRoot])
 
     return (
         <>
@@ -232,7 +252,7 @@ export default function Home() {
                 </div>
                 <div className="container mx-auto mt-10">
                     <div className="text-lg font-bold">
-                        Balance: {balance}
+                        Balance: {balance} {winAmount && <span className="text-green-400">+{winAmount}</span>}
                     </div>
                     <div className="mt-3 inline-flex items-center gap-3">
                         <button className="px-3 py-1 bg-green-600"
