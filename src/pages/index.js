@@ -116,6 +116,9 @@ export default function Home() {
                         type: "error",
                         position: "top-right",
                     });
+                    if (res.code === "TOKEN_EXPIRED") {
+                        signOut()
+                    }
                 }
             });
         }
@@ -132,7 +135,7 @@ export default function Home() {
                 'Content-Type': 'application/json',
             }
         })
-        if (res.status === 200){
+        if (res.status === 200) {
             const result = await res.json()
             setSpinHistory(result.data)
         }

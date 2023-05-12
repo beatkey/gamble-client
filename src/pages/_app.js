@@ -4,7 +4,7 @@ import {Provider, useDispatch} from "react-redux"
 import store from "@/stores";
 import 'react-toastify/dist/ReactToastify.css';
 import {ToastContainer} from "react-toastify";
-import {SessionProvider, useSession} from "next-auth/react"
+import {SessionProvider, signOut, useSession} from "next-auth/react"
 import {setBalance} from "@/stores/user";
 import {useEffect} from "react";
 
@@ -25,11 +25,17 @@ const User = ({children}) => {
 
     useEffect(() => {
         if (session.status === "authenticated") {
+            const shouldRefreshTime = session.data.user.accessTokenExpiry - Date.now();
+
+            if (shouldRefreshTime < 0) {
+                signOut()
+            }
+
             getBalance(session.data.user.accessToken)
         }
     })
 
-    async function getBalance(token){
+    async function getBalance(token) {
         const res = await fetch("http://localhost:3001/user/balance", {
             method: "GET",
             headers: {
@@ -38,7 +44,7 @@ const User = ({children}) => {
             },
         })
 
-        if (res.status === 200){
+        if (res.status === 200) {
             const result = await res.json()
             dispatch(setBalance(result.data))
         }
@@ -50,21 +56,21 @@ const User = ({children}) => {
 /*App.getInitialProps = async ({Component, ctx}) => {
     const session = await getSession(ctx)
 
+    if (session) {
+        const shouldRefreshTime = session.user.accessTokenExpiry - Date.now();
+
+        if (shouldRefreshTime < 0) {
+
+        }
+    }
+
     let pageProps = {};
     if (Component.getInitialProps) {
         pageProps = await Component.getInitialProps(ctx);
     }
 
-    if (!session) {
-        return {
-            pageProps
-        }
-    } else {
-        const {user} = session
-        return {
-            user,
-            pageProps
-        }
+    return {
+        pageProps
     }
 };*/
 
