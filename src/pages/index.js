@@ -34,9 +34,7 @@ export default function Home() {
 
     const [playedColor, setPlayedColor] = useState([])
     const [winAmount, setWinAmount] = useState(null)
-    if (winAmount){
-        console.log(winAmount)
-    }
+
     function spinReset(range) {
         setSpinDuration(0)
         setSpinDeg(range - (360 * 5))
@@ -142,15 +140,19 @@ export default function Home() {
     }
 
     async function fetchSpinHistory() {
-        const res = await fetch("http://localhost:3001/games/spin-history", {
-            method: "GET",
-            headers: {
-                'Content-Type': 'application/json',
+        try {
+            const res = await fetch("http://localhost:3001/games/spin-history", {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            if (res.status === 200) {
+                const result = await res.json()
+                setSpinHistory(result.data)
             }
-        })
-        if (res.status === 200) {
-            const result = await res.json()
-            setSpinHistory(result.data)
+        }catch (e){
+            console.error(e)
         }
     }
 
