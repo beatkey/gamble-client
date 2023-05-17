@@ -14,7 +14,9 @@ export default function Header(){
                     session.status === "authenticated" ?
                         <div className="flex items-center gap-5">
                             <div className="min-w-fit">
-                                {session.data.user.name + " " + session.data.user.surname}
+                               <a href="/profile">
+                                  {session.data.user.name + " " + session.data.user.surname} (Click to profile)
+                               </a>
                             </div>
                             <div className="min-w-fit">
                                 Balance: {balance}
