@@ -5,11 +5,13 @@ import roulettePng from "/public/roulette.png"
 import {useEffect, useRef, useState} from "react";
 import socket from "@/utils/socket";
 import {signOut, useSession} from "next-auth/react";
-import {Button} from "@mui/material";
-import Link from "next/link";
 import {toast} from "react-toastify";
 import {useDispatch, useSelector} from "react-redux";
 import {setBalance as setRootBalance} from "@/stores/user";
+import Header from "@/components/Global/Header";
+import SpinHistory from "@/components/Home/SpinHistory";
+import Players from "@/components/Home/Players";
+import AmountControl from "@/components/Home/AmountControl";
 
 export default function Home() {
     const dispatch = useDispatch()
@@ -22,16 +24,17 @@ export default function Home() {
 
     const [amount, setAmount] = useState(0)
 
-    const [redPlayers, setRedPlayers] = useState([])
-    const [greenPlayers, setGreenPlayers] = useState([])
-    const [blackPlayers, setBlackPlayers] = useState([])
+    const [players, setPlayers] = useState({
+        red: [],
+        green: [],
+        black: []
+    })
 
     const [spinDeg, setSpinDeg] = useState(0)
     const [spinDuration, setSpinDuration] = useState(0)
     const roulette = useRef()
 
     const [spinHistory, setSpinHistory] = useState([])
-
     const [playedColor, setPlayedColor] = useState([])
     const [winAmount, setWinAmount] = useState(null)
 
@@ -44,7 +47,7 @@ export default function Home() {
         if (randomNumber > 0 && randomNumber <= 7) { // red
             setPlayedColor(prevState => {
                 const data = prevState.find(value => value.color === "red")
-                if (data){
+                if (data) {
                     setWinAmount(data.amount * 2)
                     setBalance(prevState => prevState + data.amount * 2)
                 }
@@ -52,7 +55,7 @@ export default function Home() {
         } else if (randomNumber > 7 && randomNumber <= 14) { // black
             setPlayedColor(prevState => {
                 const data = prevState.find(value => value.color === "black")
-                if (data){
+                if (data) {
                     setWinAmount(data.amount * 2)
                     setBalance(prevState => prevState + data.amount * 2)
                 }
@@ -60,7 +63,7 @@ export default function Home() {
         } else { // green
             setPlayedColor(prevState => {
                 const data = prevState.find(value => value.color === "green")
-                if (data){
+                if (data) {
                     setWinAmount(data.amount * 2)
                     setBalance(prevState => prevState + data.amount * 14)
                 }
@@ -139,24 +142,8 @@ export default function Home() {
         return balance >= parseInt(amount);
     }
 
-    async function fetchSpinHistory() {
-        try {
-            const res = await fetch("http://localhost:3001/games/spin-history", {
-                method: "GET",
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            if (res.status === 200) {
-                const result = await res.json()
-                setSpinHistory(result.data)
-            }
-        }catch (e){
-            console.error(e)
-        }
-    }
 
-    function socketHandle(){
+    function socketHandle() {
         socket.on("getGameTime", (time) => {
             setTime(time)
         });
@@ -166,20 +153,23 @@ export default function Home() {
         });
 
         socket.on("updatePlayers", (players) => {
-            setRedPlayers(players.red)
-            setGreenPlayers(players.green)
-            setBlackPlayers(players.black)
+            setPlayers({
+                red: players.red,
+                green: players.green,
+                black: players.black
+            })
         });
 
         socket.emit("updatePlayers", (players) => {
-            setRedPlayers(players.red)
-            setGreenPlayers(players.green)
-            setBlackPlayers(players.black)
+            setPlayers({
+                red: players.red,
+                green: players.green,
+                black: players.black
+            })
         });
     }
 
     useEffect(() => {
-        fetchSpinHistory()
         socketHandle()
     }, [])
 
@@ -196,29 +186,7 @@ export default function Home() {
                 <link rel="icon" href="/favicon.ico"/>
             </Head>
             <main>
-                <div className="flex p-3">
-                    <div className="ml-auto">
-                        {
-                            session.status === "authenticated" ?
-                                <div className="flex items-center gap-5">
-                                    <div className="min-w-fit">
-                                        {session.data.user.name + " " + session.data.user.surname}
-                                    </div>
-                                    <div className="min-w-fit">
-                                        Balance: {balance}
-                                    </div>
-                                    <Button type="button" onClick={() => signOut()} className="w-full"
-                                            variant="outlined">Logout</Button>
-                                </div>
-                                :
-                                <>
-                                    <Link href={'/login'}>
-                                        <Button type="button" className="w-full" variant="outlined">Login</Button>
-                                    </Link>
-                                </>
-                        }
-                    </div>
-                </div>
+                <Header/>
                 <div className="container mx-auto flex justify-center">
                     <div className="relative mt-10">
                         <div ref={roulette} style={{
@@ -235,106 +203,9 @@ export default function Home() {
                             className="absolute top-1/2 -right-7 -translate-y-1/2 -translate-x-1/2 border-t-[25px] border-r-[25px] border-b-[25px] border-t-transparent border-b-transparent"></div>
                     </div>
                 </div>
-                <div className="flex justify-center gap-3 mt-10">
-                    {spinHistory.slice(0, 10).map((value, index) => {
-                        if (value.number > 0 && value.number <= 7) {
-                            return <div
-                                className={`w-8 h-8 flex justify-center items-center rounded-full text-base font-bold bg-red-600`}
-                                key={index}>{value.number}</div>
-                        } else if (value.number > 7 && value.number <= 14) {
-                            return <div
-                                className={`w-8 h-8 flex justify-center items-center rounded-full text-base font-bold bg-black`}
-                                key={index}>{value.number}</div>
-                        } else {
-                            return <div
-                                className={`w-8 h-8 flex justify-center items-center rounded-full text-base font-bold bg-green-500`}
-                                key={index}>{value.number}</div>
-                        }
-                    })}
-                </div>
-                <div className="container mx-auto mt-10">
-                    <div className="text-lg font-bold">
-                        Balance: {balance} {winAmount && <span className="text-green-400">+{winAmount}</span>}
-                    </div>
-                    <div className="mt-3 inline-flex items-center gap-3">
-                        <button className="px-3 py-1 bg-green-600"
-                                onClick={() => setAmount(prevState => parseInt(prevState + 10))}>
-                            +10
-                        </button>
-                        <button className="px-3 py-1 bg-green-600"
-                                onClick={() => setAmount(prevState => parseInt(prevState + 100))}>
-                            +100
-                        </button>
-                        <button className="px-3 py-1 bg-green-600"
-                                onClick={() => setAmount(prevState => parseInt(prevState + 1000))}>
-                            +1000
-                        </button>
-                        <button className="px-3 py-1 bg-green-600"
-                                onClick={() => setAmount(prevState => parseInt(prevState + prevState / 2))}>
-                            +50%
-                        </button>
-                        <button className="px-3 py-1 bg-red-600"
-                                onClick={() => setAmount(prevState => parseInt(prevState - prevState / 2))}>
-                            -50%
-                        </button>
-                        <button className="px-3 py-1 bg-red-600"
-                                onClick={() => setAmount(prevState => parseInt(prevState - 1000))}>
-                            -1000
-                        </button>
-                        <button className="px-3 py-1 bg-red-600"
-                                onClick={() => setAmount(prevState => parseInt(prevState - 100))}>
-                            -100
-                        </button>
-                        <button className="px-3 py-1 bg-red-600"
-                                onClick={() => setAmount(prevState => parseInt(prevState - 10))}>
-                            -10
-                        </button>
-                        <button className="px-3 py-1 bg-gray-600" onClick={() => setAmount(0)}>
-                            Clear
-                        </button>
-                    </div>
-                    <div className="mt-4">
-                        <input
-                            className="w-1/4 p-2 text-center text-black text-lg outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            type="number" onChange={e => setAmount(parseInt(e.target.value))} min={0}
-                            value={amount}/>
-                    </div>
-                </div>
-                <div className="container mx-auto flex mt-5 gap-14">
-                    <div className="flex-1">
-                        <button disabled={time <= 1} onClick={() => playHandle("red")}
-                                className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-red-500 hover:bg-red-700"}`}>
-                            1 to 7
-                        </button>
-                        <div className="mt-3">
-                            {redPlayers.map((value, index) =>
-                                <div key={index} className="text-lg">{value.name} - {value.amount}</div>
-                            )}
-                        </div>
-                    </div>
-                    <div className="flex-1">
-                        <button disabled={time <= 1} onClick={() => playHandle("green")}
-                                className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-green-500 hover:bg-green-700"}`}>
-                            0
-                        </button>
-                        <div className="mt-3">
-                            {greenPlayers.map((value, index) =>
-                                <div key={index} className="text-lg">{value.name} - {value.amount}</div>
-                            )}
-                        </div>
-                    </div>
-                    <div className="flex-1">
-                        <button disabled={time <= 1} onClick={() => playHandle("black")}
-                                className={`w-full p-2 text-center text-lg font-bold cursor-pointer transition-all ${time <= 1 ? "bg-gray-600" : "bg-black hover:bg-gray-950"}`}>
-                            8 to 14
-                        </button>
-                        <div className="mt-3">
-                            {blackPlayers.map((value, index) =>
-                                <div key={index} className="text-lg">{value.name} - {value.amount}</div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <SpinHistory spinHistory={spinHistory} setSpinHistory={setSpinHistory}/>
+                <AmountControl amount={amount} setAmount={setAmount} winAmount={winAmount}/>
+                <Players playHandle={playHandle} time={time} players={players}/>
             </main>
         </>
     )

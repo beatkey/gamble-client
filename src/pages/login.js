@@ -7,8 +7,8 @@ import {useRouter} from "next/router";
 export default function Login() {
    const router = useRouter()
    const session = useSession()
-   const [email, setEmail] = useState("test@gmail.com")
-   const [password, setPassword] = useState("123123")
+   const [email, setEmail] = useState("")
+   const [password, setPassword] = useState("")
 
    const submitHandle = async (e) => {
       e.preventDefault();
