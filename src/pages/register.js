@@ -15,7 +15,6 @@ export default function Register() {
 
    const submitHandle = async (e) => {
       e.preventDefault();
-      console.log(name, surname, email, password)
 
       try {
          const res = await fetch("http://localhost:3001/auth/register", {
