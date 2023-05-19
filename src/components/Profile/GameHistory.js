@@ -11,13 +11,11 @@ import Paper from '@mui/material/Paper';
 
 export default function GameHistory(){
     const session = useSession()
-
-
     const [rows, setRows] = useState([])
 
     async function fetchGameHistory(){
         try {
-            const res = await fetch("http://localhost:3001/games/game-history", {
+            const res = await fetch("http://localhost:3001/games/game-history?page=1", {
                 method: "GET",
                 headers: {
                     'Content-Type': 'application/json',
@@ -27,7 +25,6 @@ export default function GameHistory(){
 
             if (res.status === 200) {
                 const result = await res.json()
-                console.log(result)
                 setRows(result)
             }
         }catch (e){
@@ -59,7 +56,7 @@ export default function GameHistory(){
                           <TableCell>{row.color}</TableCell>
                           <TableCell>{row.amount}</TableCell>
                           <TableCell>{row.createdAt}</TableCell>
-                          <TableCell>10 (Black)</TableCell>
+                          <TableCell>{row.game.number}</TableCell>
                       </TableRow>
                    ))}
                </TableBody>

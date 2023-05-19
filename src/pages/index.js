@@ -20,7 +20,7 @@ export default function Home() {
     const balanceRoot = useSelector(state => state.user.balance)
     const [balance, setBalance] = useState(null)
 
-    const [time, setTime] = useState(null)
+    const [time, setTime] = useState(15)
 
     const [amount, setAmount] = useState(0)
 
@@ -141,7 +141,6 @@ export default function Home() {
     function checkBalance(amount) {
         return balance >= parseInt(amount);
     }
-
 
     function socketHandle() {
         socket.on("getGameTime", (time) => {

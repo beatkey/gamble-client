@@ -7,6 +7,7 @@ import {ToastContainer} from "react-toastify";
 import {SessionProvider, signOut, useSession} from "next-auth/react"
 import {setBalance} from "@/stores/user";
 import {useEffect} from "react";
+import {useRouter} from "next/router";
 
 function App({Component, user, pageProps}) {
     return <Provider store={store}>
@@ -20,6 +21,7 @@ function App({Component, user, pageProps}) {
 }
 
 const User = ({children}) => {
+    const router = useRouter()
     const session = useSession()
     const dispatch = useDispatch()
 
@@ -46,7 +48,12 @@ const User = ({children}) => {
 
         if (res.status === 200) {
             const result = await res.json()
-            dispatch(setBalance(result.data))
+            if (result.data){
+                dispatch(setBalance(result.data))
+            }
+        }else{
+            signOut()
+            router.push("/login")
         }
     }
 
