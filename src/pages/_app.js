@@ -38,22 +38,26 @@ const User = ({children}) => {
     })
 
     async function getBalance(token) {
-        const res = await fetch("http://localhost:3001/user/balance", {
-            method: "GET",
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': token
-            },
-        })
+        try {
+            const res = await fetch("http://localhost:3001/user/balance", {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': token
+                },
+            })
 
-        if (res.status === 200) {
-            const result = await res.json()
-            if (result.data){
-                dispatch(setBalance(result.data))
+            if (res.status === 200) {
+                const result = await res.json()
+                if (result.data){
+                    dispatch(setBalance(result.data))
+                }
+            }else{
+                signOut()
+                router.push("/login")
             }
-        }else{
-            signOut()
-            router.push("/login")
+        }catch (e){
+            console.error(e)
         }
     }
 
