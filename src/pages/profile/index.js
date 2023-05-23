@@ -1,7 +1,7 @@
 import {getSession} from "next-auth/react";
 import Header from "@/components/Global/Header";
 import Head from "next/head";
-import * as React from 'react';
+import {useState} from "react";
 import { useTheme } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Tabs from '@mui/material/Tabs';
@@ -39,14 +39,10 @@ function a11yProps(index) {
 
 export default function Profile() {
     const theme = useTheme();
-    const [value, setValue] = React.useState(0);
+    const [value, setValue] = useState(0);
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
-    };
-
-    const handleChangeIndex = (index) => {
-        setValue(index);
     };
 
     return <>
@@ -72,7 +68,6 @@ export default function Profile() {
                         >
                             <Tab label="Settings" {...a11yProps(0)} />
                             <Tab label="Game History" {...a11yProps(1)} />
-                            <Tab label="Item Three" {...a11yProps(2)} />
                         </Tabs>
                     </AppBar>
                     <TabPanel value={value} index={0} dir={theme.direction}>
@@ -80,9 +75,6 @@ export default function Profile() {
                     </TabPanel>
                     <TabPanel value={value} index={1} dir={theme.direction}>
                         <GameHistory/>
-                    </TabPanel>
-                    <TabPanel value={value} index={2} dir={theme.direction}>
-                        Item Three
                     </TabPanel>
                 </Box>
             </div>
