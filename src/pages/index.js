@@ -10,6 +10,8 @@ import SpinHistory from "@/components/Home/SpinHistory";
 import Players from "@/components/Home/Players";
 import AmountControl from "@/components/Home/AmountControl";
 import Roulette from "@/components/Home/Roulette";
+import {TextField} from "@mui/material";
+import Chat from "@/components/Home/Chat";
 
 export default function Home() {
     const dispatch = useDispatch()
@@ -63,59 +65,6 @@ export default function Home() {
         }, 2000)
     }
 
-    function playHandle(color) {
-        if (session && session.status === "unauthenticated") {
-            toast("You need to login to play.", {
-                type: "error",
-                position: "top-right",
-            });
-            return;
-        }
-
-        if (time <= 1) {
-            return
-        }
-
-        if (!socket.connected) {
-            toast("Server error", {
-                type: "error",
-                position: "top-right",
-            });
-            return;
-        }
-
-        if (amount.toString().length > 1 && amount > 0 && checkBalance(amount)) {
-            socket.emit("playHandle", {
-                color: color,
-                amount: amount,
-                token: session.data.user.accessToken
-            }, (res) => {
-                if (res.status) {
-                    dispatch(setBalance(balance - amount))
-
-                    setPlayedColor(prevState => [...prevState, {color, amount}])
-
-                    toast(`${color.charAt(0).toUpperCase() + color.slice(1)} ${amount} played.`, {
-                        type: "success",
-                        position: "top-right",
-                    });
-                } else {
-                    toast(res.message, {
-                        type: "error",
-                        position: "top-right",
-                    });
-                    if (res.code === "TOKEN_EXPIRED") {
-                        signOut()
-                    }
-                }
-            });
-        }
-    }
-
-    function checkBalance(amount) {
-        return balance >= parseInt(amount);
-    }
-
     useEffect(() => {
         socket.on("getGameTime", (time) => {
             setTime(time)
@@ -161,12 +110,19 @@ export default function Home() {
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <link rel="icon" href="/favicon.ico"/>
             </Head>
-            <main>
+            <main className="h-screen grid grid-rows-[max-content_auto]">
                 <Header/>
-                <Roulette time={time} spin={spin} setSpin={setSpin} setSpinHistory={setSpinHistory} playedColor={playedColor} giveEarning={giveEarning} />
-                <SpinHistory spinHistory={spinHistory} setSpinHistory={setSpinHistory}/>
-                <AmountControl amount={amount} setAmount={setAmount} winAmount={winAmount}/>
-                <Players playHandle={playHandle} time={time} players={players}/>
+                <div className="flex items-stretch p-3">
+                    <div className="w-3/12 mr-5 border grid grid-rows-[max-content_auto_max-content]">
+                        <Chat />
+                    </div>
+                    <div className="w-full">
+                        <Roulette time={time} spin={spin} setSpin={setSpin} setSpinHistory={setSpinHistory} playedColor={playedColor} giveEarning={giveEarning} />
+                        <SpinHistory spinHistory={spinHistory} setSpinHistory={setSpinHistory}/>
+                        <AmountControl amount={amount} setAmount={setAmount} winAmount={winAmount}/>
+                        <Players setPlayedColor={setPlayedColor} amount={amount} time={time} players={players}/>
+                    </div>
+                </div>
             </main>
         </>
     )

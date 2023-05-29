@@ -1,4 +1,67 @@
-export default function Players({playHandle, time, players}){
+import {toast} from "react-toastify";
+import socket from "@/utils/socket";
+import {setBalance} from "@/stores/user";
+import {signOut, useSession} from "next-auth/react";
+import {useDispatch, useSelector} from "react-redux";
+
+export default function Players({setPlayedColor, amount, time, players}){
+    const dispatch = useDispatch()
+    const session = useSession()
+    const balance = useSelector(state => state.user.balance)
+
+    function checkBalance(amount) {
+        return balance >= parseInt(amount);
+    }
+
+    function playHandle(color) {
+        if (session && session.status === "unauthenticated") {
+            toast("You need to login to play.", {
+                type: "error",
+                position: "top-right",
+            });
+            return;
+        }
+
+        if (time <= 1) {
+            return
+        }
+
+        if (!socket.connected) {
+            toast("Server error", {
+                type: "error",
+                position: "top-right",
+            });
+            return;
+        }
+
+        if (amount.toString().length > 1 && amount > 0 && checkBalance(amount)) {
+            socket.emit("playHandle", {
+                color: color,
+                amount: amount,
+                token: session.data.user.accessToken
+            }, (res) => {
+                if (res.status) {
+                    dispatch(setBalance(balance - amount))
+
+                    setPlayedColor(prevState => [...prevState, {color, amount}])
+
+                    toast(`${color.charAt(0).toUpperCase() + color.slice(1)} ${amount} played.`, {
+                        type: "success",
+                        position: "top-right",
+                    });
+                } else {
+                    toast(res.message, {
+                        type: "error",
+                        position: "top-right",
+                    });
+                    if (res.code === "TOKEN_EXPIRED") {
+                        signOut()
+                    }
+                }
+            });
+        }
+    }
+
     return (
         <div className="container mx-auto flex mt-5 gap-14">
             <div className="flex-1">
