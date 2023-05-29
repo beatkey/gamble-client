@@ -1,26 +1,28 @@
 import Head from "next/head";
-import Image from "next/image";
-
-import roulettePng from "/public/roulette.png"
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useState} from "react";
 import socket from "@/utils/socket";
 import {signOut, useSession} from "next-auth/react";
 import {toast} from "react-toastify";
 import {useDispatch, useSelector} from "react-redux";
-import {setBalance as setRootBalance} from "@/stores/user";
+import {setBalance} from "@/stores/user";
 import Header from "@/components/Global/Header";
 import SpinHistory from "@/components/Home/SpinHistory";
 import Players from "@/components/Home/Players";
 import AmountControl from "@/components/Home/AmountControl";
+import Roulette from "@/components/Home/Roulette";
 
 export default function Home() {
     const dispatch = useDispatch()
     const session = useSession()
 
-    const balanceRoot = useSelector(state => state.user.balance)
-    const [balance, setBalance] = useState(null)
-
-    const [time, setTime] = useState(15)
+    const balance = useSelector(state => state.user.balance)
+    const [time, setTime] = useState(null)
+    const [spin, setSpin] = useState({
+        spinning: false,
+        randomNumber: null,
+        range: null,
+        raffleTime: null
+    })
 
     const [amount, setAmount] = useState(0)
 
@@ -30,63 +32,35 @@ export default function Home() {
         black: []
     })
 
-    const [spinDeg, setSpinDeg] = useState(0)
-    const [spinDuration, setSpinDuration] = useState(0)
-    const roulette = useRef()
-
     const [spinHistory, setSpinHistory] = useState([])
     const [playedColor, setPlayedColor] = useState([])
     const [winAmount, setWinAmount] = useState(null)
 
-    function spinReset(range) {
-        setSpinDuration(0)
-        setSpinDeg(range - (360 * 5))
-    }
-
     const giveEarning = (randomNumber) => {
         if (randomNumber > 0 && randomNumber <= 7) { // red
-            setPlayedColor(prevState => {
-                const data = prevState.find(value => value.color === "red")
-                if (data) {
-                    setWinAmount(data.amount * 2)
-                    setBalance(prevState => prevState + data.amount * 2)
-                }
-            })
+            const data = playedColor.find(value => value.color === "red")
+            if (data) {
+                dispatch(setBalance(balance + data.amount * 2))
+                setWinAmount(data.amount * 2)
+            }
         } else if (randomNumber > 7 && randomNumber <= 14) { // black
-            setPlayedColor(prevState => {
-                const data = prevState.find(value => value.color === "black")
-                if (data) {
-                    setWinAmount(data.amount * 2)
-                    setBalance(prevState => prevState + data.amount * 2)
-                }
-            })
+            const data = playedColor.find(value => value.color === "black")
+            if (data) {
+                dispatch(setBalance(balance + data.amount * 2))
+                setWinAmount(data.amount * 2)
+            }
         } else { // green
-            setPlayedColor(prevState => {
-                const data = prevState.find(value => value.color === "green")
-                if (data) {
-                    setWinAmount(data.amount * 2)
-                    setBalance(prevState => prevState + data.amount * 14)
-                }
-            })
+            const data = playedColor.find(value => value.color === "green")
+            if (data) {
+                dispatch(setBalance(balance + data.amount * 14))
+                setWinAmount(data.amount * 14)
+            }
         }
 
         setPlayedColor([])
         setTimeout(() => {
             setWinAmount(null)
         }, 2000)
-    }
-
-    function spin(randomNumber, range, raffleTime) {
-        setSpinDuration(raffleTime)
-        setSpinDeg(range + (360 * 5)) // spin range + (360 * spin rep)
-
-        setTimeout(() => {
-            spinReset(range)
-            setSpinHistory(prevState => [{
-                number: randomNumber
-            }, ...prevState])
-            giveEarning(randomNumber)
-        }, raffleTime)
     }
 
     function playHandle(color) {
@@ -117,7 +91,7 @@ export default function Home() {
                 token: session.data.user.accessToken
             }, (res) => {
                 if (res.status) {
-                    dispatch(setRootBalance(balance - amount))
+                    dispatch(setBalance(balance - amount))
 
                     setPlayedColor(prevState => [...prevState, {color, amount}])
 
@@ -142,13 +116,18 @@ export default function Home() {
         return balance >= parseInt(amount);
     }
 
-    function socketHandle() {
+    useEffect(() => {
         socket.on("getGameTime", (time) => {
             setTime(time)
-        });
+        })
 
         socket.on("spin", ({randomNumber, range, raffleTime}) => {
-            spin(randomNumber, range, raffleTime)
+            setSpin({
+                spinning: true,
+                randomNumber,
+                range,
+                raffleTime
+            })
         });
 
         socket.on("updatePlayers", (players) => {
@@ -166,15 +145,13 @@ export default function Home() {
                 black: players.black
             })
         });
-    }
-
-    useEffect(() => {
-        socketHandle()
     }, [])
 
     useEffect(() => {
-        setBalance(balanceRoot)
-    }, [balanceRoot])
+        if (session.status === "authenticated") {
+            dispatch(setBalance(session.data.user.balance))
+        }
+    }, [session])
 
     return (
         <>
@@ -186,22 +163,7 @@ export default function Home() {
             </Head>
             <main>
                 <Header/>
-                <div className="container mx-auto flex justify-center">
-                    <div className="relative mt-10">
-                        <div ref={roulette} style={{
-                            transform: `rotate(${spinDeg}deg)`,
-                            transition: `transform ${spinDuration}ms cubic-bezier(0.32, 0.95, 0.45, 1) 0ms`
-                        }}>
-                            <Image src={roulettePng} alt="Roulette"/>
-                        </div>
-                        <div
-                            className="absolute w-full h-full text-5xl inset-0 flex items-center justify-center">
-                            {time === 0 ? "Raffling" : time}
-                        </div>
-                        <div
-                            className="absolute top-1/2 -right-7 -translate-y-1/2 -translate-x-1/2 border-t-[25px] border-r-[25px] border-b-[25px] border-t-transparent border-b-transparent"></div>
-                    </div>
-                </div>
+                <Roulette time={time} spin={spin} setSpin={setSpin} setSpinHistory={setSpinHistory} playedColor={playedColor} giveEarning={giveEarning} />
                 <SpinHistory spinHistory={spinHistory} setSpinHistory={setSpinHistory}/>
                 <AmountControl amount={amount} setAmount={setAmount} winAmount={winAmount}/>
                 <Players playHandle={playHandle} time={time} players={players}/>
