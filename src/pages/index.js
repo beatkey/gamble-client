@@ -1,8 +1,7 @@
 import Head from "next/head";
 import {useEffect, useState} from "react";
 import socket from "@/utils/socket";
-import {signOut, useSession} from "next-auth/react";
-import {toast} from "react-toastify";
+import {useSession} from "next-auth/react";
 import {useDispatch, useSelector} from "react-redux";
 import {setBalance} from "@/stores/user";
 import Header from "@/components/Global/Header";
@@ -10,7 +9,6 @@ import SpinHistory from "@/components/Home/SpinHistory";
 import Players from "@/components/Home/Players";
 import AmountControl from "@/components/Home/AmountControl";
 import Roulette from "@/components/Home/Roulette";
-import {TextField} from "@mui/material";
 import Chat from "@/components/Home/Chat";
 
 export default function Home() {
@@ -113,9 +111,7 @@ export default function Home() {
             <main className="h-screen grid grid-rows-[max-content_auto]">
                 <Header/>
                 <div className="flex items-stretch p-3">
-                    <div className="w-3/12 mr-5 border grid grid-rows-[max-content_auto_max-content]">
-                        <Chat />
-                    </div>
+                    <Chat />
                     <div className="w-full">
                         <Roulette time={time} spin={spin} setSpin={setSpin} setSpinHistory={setSpinHistory} playedColor={playedColor} giveEarning={giveEarning} />
                         <SpinHistory spinHistory={spinHistory} setSpinHistory={setSpinHistory}/>
