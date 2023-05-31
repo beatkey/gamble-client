@@ -1,9 +1,9 @@
 import Image from "next/image";
-import roulettePng from "../../../public/roulette.png";
+import roulettePng from "../../../../public/roulette.png";
 import {useEffect, useRef, useState} from "react";
 import {useSession} from "next-auth/react";
 
-export default function Roulette({time, spin, setSpin, setSpinHistory, playedColor, giveEarning}) {
+export default function Spinner({time, spin, setSpin, setSpinHistory, playedColor, giveEarning}) {
     const session = useSession()
 
     const [spinDeg, setSpinDeg] = useState(0)
@@ -66,7 +66,7 @@ export default function Roulette({time, spin, setSpin, setSpinHistory, playedCol
                 transform: `rotate(${spinDeg}deg)`,
                 transition: `transform ${spinDuration}ms cubic-bezier(0.32, 0.95, 0.45, 1) 0ms`
             }}>
-                <Image src={roulettePng} alt="Roulette"/>
+                <Image src={roulettePng} alt="Spinner"/>
             </div>
             <TimeText/>
             <div
