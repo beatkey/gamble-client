@@ -7,6 +7,7 @@ import {ToastContainer} from "react-toastify";
 import {SessionProvider, signOut, useSession} from "next-auth/react"
 import {useEffect} from "react";
 import {setBalance} from "@/stores/user";
+import axios from "axios";
 
 function App({Component, pageProps}) {
     return <Provider store={store}>
@@ -25,7 +26,7 @@ const User = ({children}) => {
 
     async function fetchBalance() {
         try {
-            const res = await fetch("http://localhost:3001/user/balance", {
+            const res = await fetch("http://localhost:3001/auth/balance", {
                 method: "GET",
                 headers: {
                     'Content-Type': 'application/json',
@@ -51,6 +52,7 @@ const User = ({children}) => {
             if (shouldRefreshTime < 0) {
                 signOut()
             } else {
+                axios.defaults.headers.common["x-access-token"] = session.data.user.accessToken
                 fetchBalance()
             }
         }

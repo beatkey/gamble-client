@@ -2,8 +2,21 @@ import Head from "next/head";
 import Header from "@/components/Global/Header";
 import Chat from "@/components/Home/Chat";
 import Roulette from "@/components/Home/Roulette";
+import {useSelector} from "react-redux";
+import Jackpot from "@/components/Home/Jackpot";
 
 export default function Home() {
+    const game = useSelector(state => state.general.game)
+    console.log(game)
+    const GameComp = () => {
+        switch (game) {
+            case "jackpot":
+                return <Jackpot/>
+            default:
+                return <Roulette/>
+        }
+    }
+
     return (
         <>
             <Head>
@@ -16,7 +29,7 @@ export default function Home() {
                 <Header/>
                 <div className="flex items-stretch p-3">
                     <Chat/>
-                    <Roulette/>
+                    <GameComp/>
                 </div>
             </main>
         </>
