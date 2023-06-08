@@ -7,7 +7,7 @@ import Jackpot from "@/components/Home/Jackpot";
 
 export default function Home() {
     const game = useSelector(state => state.general.game)
-    console.log(game)
+
     const GameComp = () => {
         switch (game) {
             case "jackpot":

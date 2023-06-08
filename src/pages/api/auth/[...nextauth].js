@@ -1,5 +1,20 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials";
+import axios from "axios";
+
+async function fetchUser(accessToken) {
+    try {
+        const response = await axios.get("http://localhost:3001/auth/user", {
+            headers: {
+                'x-access-token': accessToken
+            }
+        });
+        return response.data;
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
 
 export const authOptions = {
     providers: [
@@ -33,26 +48,28 @@ export const authOptions = {
         })
     ],
     callbacks: {
-        jwt: async ({ token, user }) => {
+        jwt: ({ token, user }) => {
             if (user) {
                 token.name = user.name;
                 token.surname = user.surname;
                 token.email = user.email;
                 token.accessToken = user.token;
-                token.balance = user.balance;
                 token.accessTokenExpiry = user.accessTokenExpiry;
+                token.balance = user.balance;
+                token.photo = user.photo;
             }
-
             return token
         },
-        session: ({ session, token }) => {
+        session: async ({ session, token }) => {
             if (token) {
-                session.user.name = token.name;
-                session.user.surname = token.surname;
-                session.user.email = token.email;
+                const data = await fetchUser(token.accessToken)
+                session.user.name = data.name;
+                session.user.surname = data.surname;
+                session.user.email = data.email;
                 session.user.accessToken = token.accessToken;
                 session.user.accessTokenExpiry = token.accessTokenExpiry;
-                session.user.balance = token.balance;
+                session.user.balance = data.balance;
+                session.user.photo = data.photo;
             }
             return session;
         },

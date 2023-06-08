@@ -1,19 +1,23 @@
 import {signOut, useSession} from "next-auth/react";
 import {Button, TextField} from "@mui/material";
 import {toast} from "react-toastify";
-import {useState} from "react";
+import {useRef, useState} from "react";
 import {useRouter} from "next/router";
 import axios from "axios";
+import Image from "next/image";
 
 export default function Settings() {
     const router = useRouter()
     const session = useSession()
+    const fileInputRef = useRef()
+
     const user = session.data.user
     const [name, setName] = useState(user.name)
     const [surname, setSurname] = useState(user.surname)
     const [email, setEmail] = useState(user.email)
     const [password, setPassword] = useState("")
-    const [photo, setPhoto] = useState(null)
+    const [photo, setPhoto] = useState("http://localhost:3001/" + user.photo)
+    const [file, setFile] = useState(null)
 
     const submitHandle = async (e) => {
         e.preventDefault();
@@ -23,7 +27,7 @@ export default function Settings() {
         formData.append("surname", surname)
         formData.append("email", email)
         formData.append("password", password)
-        formData.append("photo", photo)
+        formData.append("photo", file)
 
         try {
             await axios.post("http://localhost:3001/auth/update-information", formData, {
@@ -31,13 +35,12 @@ export default function Settings() {
                     'Content-Type': 'multipart/form-data'
                 }
             })
-            toast("Update success, you have to login again.", {
+            toast("Update success.", {
                 type: "success",
                 position: "top-right",
                 autoClose: 2000,
                 onClose: () => {
-                    /*signOut()
-                    router.push("/login")*/
+                    router.reload()
                 }
             });
         } catch (e) {
@@ -61,45 +64,29 @@ export default function Settings() {
                 });
             }
         }
-
-        /*await axios.post("http://localhost:3001/auth/update-information", formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        }).then(res => {
-            console.log(res)
-            toast("Update success, you have to login again.", {
-                type: "success",
-                position: "top-right",
-                autoClose: 2000,
-                onClose: () => {
-                    /!*signOut()
-                    router.push("/login")*!/
-                }
-            });
-        }).catch(err => {
-            console.error(err)
-            if (err.response.status === 500){
-                toast("Server Error", {
-                    type: "error",
-                    position: "top-right",
-                });
-            }else{
-                toast(err.response.data.message, {
-                    type: "error",
-                    position: "top-right",
-                });
-            }
-        })*/
     }
 
     function handleFileChange(e) {
+        e.preventDefault()
         const file = e.target.files[0];
-        if (false/*file.size > 1024 ** 2*/) {
-            e.preventDefault()
-            alert("File size cannot exceed more than 1MB")
-        } else {
-            setPhoto(file)
+
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                return toast("You can upload just photo", {
+                    type: "error",
+                    position: "top-right",
+                });
+            }
+
+            if (file.size > 1024 ** 2) {
+                return toast("File size cannot exceed more than 2MB", {
+                    type: "error",
+                    position: "top-right",
+                });
+            }
+
+            setPhoto(URL.createObjectURL(file))
+            setFile(file)
         }
     }
 
@@ -147,7 +134,11 @@ export default function Settings() {
                     />
                 </div>
                 <div className="mt-2">
-                    <input type="file" onChange={handleFileChange}/>
+                    <Button variant="outlined" onClick={() => fileInputRef.current.click()}>Upload Photo</Button>
+                    <input ref={fileInputRef} className="hidden" type="file" onChange={handleFileChange}/>
+                </div>
+                <div className="mt-2">
+                    <img className="w-56" src={photo} alt={"Profile Photo"}/>
                 </div>
                 <div className="mt-2">
                     <Button type="submit" className="w-full" variant="outlined">Update</Button>

@@ -20,14 +20,7 @@ export default function Login() {
             redirect: false
          }).then((result) => {
             if (result.status === 200) {
-               toast("Login success, redirecting...", {
-                  type: "success",
-                  position: "top-right",
-                  autoClose: 2000,
-                  onClose: () => {
-                     router.push("/")
-                  }
-               });
+               router.push("/")
             } else {
                if (result.error === "CredentialsSignin") {
                   toast("Email or password is wrong", {

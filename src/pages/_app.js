@@ -24,27 +24,6 @@ const User = ({children}) => {
     const session = useSession()
     const dispatch = useDispatch()
 
-    async function fetchBalance() {
-        try {
-            const res = await fetch("http://localhost:3001/auth/balance", {
-                method: "GET",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-access-token': session.data.user.accessToken
-                },
-            })
-
-            if (res.status === 200) {
-                const result = await res.json()
-                if (result.data) {
-                    dispatch(setBalance(result.data))
-                }
-            }
-        } catch (e) {
-            console.error(e)
-        }
-    }
-
     useEffect(() => {
         if (session.status === "authenticated") {
             const shouldRefreshTime = session.data.user.accessTokenExpiry - Date.now();
@@ -53,7 +32,7 @@ const User = ({children}) => {
                 signOut()
             } else {
                 axios.defaults.headers.common["x-access-token"] = session.data.user.accessToken
-                fetchBalance()
+                dispatch(setBalance(session.data.user.balance))
             }
         }
     }, [session])

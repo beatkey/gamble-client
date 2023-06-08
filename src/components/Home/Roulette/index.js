@@ -2,15 +2,11 @@ import Spinner from "@/components/Home/Roulette/Spinner";
 import SpinHistory from "@/components/Home/Roulette/SpinHistory";
 import AmountControl from "@/components/Home/Roulette/AmountControl";
 import Players from "@/components/Home/Roulette/Players";
-import {useDispatch, useSelector} from "react-redux";
 import {useEffect, useState} from "react";
-import {setBalance} from "@/stores/user";
 import socket from "@/utils/socket";
+import fetchBalance from "@/utils/fetchBalance";
 
 export default function Roulette(){
-    const dispatch = useDispatch()
-
-    const balance = useSelector(state => state.user.balance)
     const [time, setTime] = useState(null)
     const [spin, setSpin] = useState({
         spinning: false,
@@ -18,7 +14,7 @@ export default function Roulette(){
         range: null,
         raffleTime: null
     })
-
+    fetchBalance()
     const [amount, setAmount] = useState(0)
 
     const [players, setPlayers] = useState({
@@ -35,23 +31,24 @@ export default function Roulette(){
         if (randomNumber > 0 && randomNumber <= 7) { // red
             const data = playedColor.find(value => value.color === "red")
             if (data) {
-                dispatch(setBalance(balance + data.amount * 2))
+                //dispatch(setBalance(balance + data.amount * 2))
                 setWinAmount(data.amount * 2)
             }
         } else if (randomNumber > 7 && randomNumber <= 14) { // black
             const data = playedColor.find(value => value.color === "black")
             if (data) {
-                dispatch(setBalance(balance + data.amount * 2))
+                //dispatch(setBalance(balance + data.amount * 2))
                 setWinAmount(data.amount * 2)
             }
         } else { // green
             const data = playedColor.find(value => value.color === "green")
             if (data) {
-                dispatch(setBalance(balance + data.amount * 14))
+                //dispatch(setBalance(balance + data.amount * 14))
                 setWinAmount(data.amount * 14)
             }
         }
 
+        fetchBalance()
         setPlayedColor([])
         setTimeout(() => {
             setWinAmount(null)
