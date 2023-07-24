@@ -4,7 +4,7 @@ import AmountControl from "@/components/Home/Roulette/AmountControl";
 import Players from "@/components/Home/Roulette/Players";
 import {useEffect, useState} from "react";
 import socket from "@/utils/socket";
-import fetchBalance from "@/utils/fetchBalance";
+import useFetchBalance from "@/utils/fetchBalance";
 
 export default function Roulette(){
     const [time, setTime] = useState(null)
@@ -14,7 +14,7 @@ export default function Roulette(){
         range: null,
         raffleTime: null
     })
-    fetchBalance()
+
     const [amount, setAmount] = useState(0)
 
     const [players, setPlayers] = useState({
@@ -48,7 +48,7 @@ export default function Roulette(){
             }
         }
 
-        fetchBalance()
+        //useFetchBalance()
         setPlayedColor([])
         setTimeout(() => {
             setWinAmount(null)

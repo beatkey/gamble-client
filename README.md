@@ -1,3 +1,5 @@
+## Node version : 16.14.2 <br> Npm version : 8.5.0
+
 ### Todo
 - [ ] Realtime balance system
 - [ ] Gametime on window title
