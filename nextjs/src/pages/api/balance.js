@@ -1,5 +1,5 @@
 import {getServerSession} from "next-auth";
-import {authOptions} from "@/pages/api/auth/[...nextauth]";
+import {authOptions} from "nextjs/src/pages/api/auth/[...nextauth]";
 import axios from "axios";
 
 export default async function handler(req, res) {

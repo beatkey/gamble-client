@@ -1,7 +1,7 @@
-import '@/styles/globals.css'
+import 'nextjs/src/styles/Globals.css'
 
 import {Provider, useDispatch} from "react-redux"
-import store from "@/stores";
+import store from "nextjs/src/stores";
 import 'react-toastify/dist/ReactToastify.css';
 import {ToastContainer} from "react-toastify";
 import {SessionProvider, signOut, useSession} from "next-auth/react"
